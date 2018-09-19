@@ -58,11 +58,27 @@ def showHeaderInfo(header):
     info_text.delete('1.0', END)
     info_text.insert('1.0', info)
     info_text.config(state=DISABLED)
+    
+def hist():
+    RefDs = dicom.read_file(lstFilesDCM[cb.current()])
+    rows = int(RefDs.Rows)
+    columns = int(RefDs.Columns)
+    
+    intensity = [0]*65536
+    
+    for i in range(rows):
+        for j in range(columns):
+            intensity[RefDs.pixel_array[i,j]]=intensity[RefDs.pixel_array[i,j]]+1
+            
+    intensity = np.asarray(intensity)
+    plt.plot(intensity)
+    plt.show()
+    
             
 def processImage():
     global canvas
     RefDs = dicom.read_file(lstFilesDCM[cb.current()])
-    showHeaderInfo(RefDs) 
+    showHeaderInfo(RefDs)
     
     plt.set_cmap(plt.gray())
     f = Figure()
@@ -96,6 +112,9 @@ cb.pack(padx=20, pady=5)
 
 process_bt = tk.Button(files_fr, text="Process file", command=headerInfo, bg='white')
 process_bt.pack(pady=5)
+
+his_bt = tk.Button(files_fr, text="Show histogram", command=hist, bg='white')
+his_bt.pack(pady=5)
    
 info_text = tk.Text(files_fr, width = 90, height = 11)
 info_text.pack(pady=20)
