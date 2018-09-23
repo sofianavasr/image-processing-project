@@ -63,12 +63,12 @@ def hist():
     RefDs = dicom.read_file(lstFilesDCM[cb.current()])
     rows = int(RefDs.Rows)
     columns = int(RefDs.Columns)
-    
+    pixelArray = RefDs.pixel_array    
     intensity = [0]*65536
     
     for i in range(rows):
         for j in range(columns):
-            intensity[RefDs.pixel_array[i,j]]=intensity[RefDs.pixel_array[i,j]]+1
+            intensity[pixelArray[i,j]]=intensity[pixelArray[i,j]]+1
             
     intensity = np.asarray(intensity)
     plt.plot(intensity)
