@@ -15,36 +15,33 @@ from matplotlib.figure import Figure
 from matplotlib import pyplot as plt
 import matplotlib.image as mpimg
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-
+from tkinter import messagebox
 
 lstFilesDCM = []      
-def headerInfo():   
-    info_text.delete('1.0', END)        
-    processImage()
 
-def selectFolder():    
-    folder =  filedialog.askdirectory()
-    loadFiles(folder)
-
-def loadFiles(folder):
+def loadFiles():
     resetSelector()
+    folder =  filedialog.askdirectory()    
     lstFilenames = []
     for dirName, subdirList, fileList in os.walk(folder):
         for filename in fileList:
-            if "" in filename.lower():
+            if ".dcm" in filename.lower():
                 lstFilesDCM.append(os.path.join(dirName,filename))
                 lstFilenames.append(filename)
     
-    cb["values"] = lstFilenames    
+    file_cb["values"] = lstFilenames    
     files_fr.pack() 
 
 def resetSelector():
     global lstFilesDCM
     lstFilesDCM.clear()
     info_text.delete('1.0', END)
-    cb.set("Select a DICOM file")    
+    file_cb.set("Select a DICOM file")
+    functions_cb.set("Select function")
+    apply_bt.configure(state=DISABLED)    
     
 def showHeaderInfo(header):
+    info_text.delete('1.0', END)
     info_text.config(state=NORMAL)  
     info = "\nPatient ID: "+header.PatientID
     info += "\nManufacturer: "+header.Manufacturer
@@ -59,11 +56,11 @@ def showHeaderInfo(header):
     info_text.insert('1.0', info)
     info_text.config(state=DISABLED)
     
-def hist():
-    RefDs = dicom.read_file(lstFilesDCM[cb.current()])
-    rows = int(RefDs.Rows)
-    columns = int(RefDs.Columns)
-    pixelArray = RefDs.pixel_array    
+def hist():    
+    imageInfo = dicom.read_file(lstFilesDCM[file_cb.current()])
+    rows = int(imageInfo.Rows)
+    columns = int(imageInfo.Columns)
+    pixelArray = imageInfo.pixel_array    
     intensity = [0]*65536
     
     for i in range(rows):
@@ -72,51 +69,72 @@ def hist():
             
     intensity = np.asarray(intensity)
     plt.plot(intensity)
-    plt.show()
+
+    fig = plt.gcf()
+    fig.canvas.set_window_title('Histogram')       
     
+    plt.show()       
             
 def processImage():
-    global canvas
-    RefDs = dicom.read_file(lstFilesDCM[cb.current()])
-    showHeaderInfo(RefDs)
+    global canvas        
+    text_fr.pack()   
+    apply_bt.configure(state=NORMAL)
+
+    imageInfo = dicom.read_file(lstFilesDCM[file_cb.current()])
+    showHeaderInfo(imageInfo)
     
     plt.set_cmap(plt.gray())
     f = Figure()
     a = f.add_subplot(111)    
-    a.imshow(np.flipud(RefDs.pixel_array))     
+    a.imshow(np.flipud(imageInfo.pixel_array))     
     canvas.get_tk_widget().destroy()
     canvas = FigureCanvasTkAgg(f, master=root)
     canvas.draw()
     canvas.get_tk_widget().pack()    
     
+def applyFunction():
+    function = functions_cb.get()    
+    if function == 'Histogram':
+        hist()
+    else:
+        messagebox.showinfo("Error", "Function not found")    
+
 
 #TK components
 root = tk.Tk()
 root.title("Medical Imaging")
-root.configure(background='black')
-root.geometry("{0}x{1}+0+0".format(root.winfo_screenwidth(), root.winfo_screenheight()))
+root.configure(background='pink')
+root.geometry('%dx%d+%d+%d' % (700, root.winfo_screenheight(), 0, 0))
 
 selectFolder_fr = Frame(root)
-selectFolder_fr.configure(background='black')
+selectFolder_fr.configure(background='pink')
 selectFolder_fr.pack()
 
-selectFolder_bt = tk.Button(selectFolder_fr, text="Select folder", command=selectFolder, bg='white')
+selectFolder_bt = tk.Button(selectFolder_fr, text="Select folder", command=loadFiles, bg='white')
 selectFolder_bt.pack(pady=5)
 
 files_fr =Frame(root)
-files_fr.configure(background='black')
+files_fr.configure(background='pink')
 
-cb = ttk.Combobox(files_fr, state='readonly')
-cb.set("Select a DICOM file")
-cb.pack(padx=20, pady=5)
+file_cb = ttk.Combobox(files_fr, state='readonly')
+file_cb.set("Select a DICOM file")
+file_cb.grid(row=0, column=0)
 
-process_bt = tk.Button(files_fr, text="Process file", command=headerInfo, bg='white')
-process_bt.pack(pady=5)
+process_bt = tk.Button(files_fr, text="Process", command=processImage, bg='white')
+process_bt.grid(row=0, column=1, padx=5)
 
-his_bt = tk.Button(files_fr, text="Show histogram", command=hist, bg='white')
-his_bt.pack(pady=5)
-   
-info_text = tk.Text(files_fr, width = 90, height = 11)
+functions_cb = ttk.Combobox(files_fr, state='readonly')
+functions_cb.set("Select function")
+functions_cb.grid(row=1, column=0, pady=10)
+functions_cb["values"] = ['Histogram']
+
+apply_bt = tk.Button(files_fr, text="Apply", command=applyFunction, bg='white', state=DISABLED)
+apply_bt.grid(row=1, column=1, pady=10, padx=5)
+
+text_fr = Frame(root)
+text_fr.configure(background='pink')
+
+info_text = tk.Text(text_fr, width = 90, height = 11)
 info_text.pack(pady=20)
 
 f = Figure()
