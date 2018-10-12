@@ -99,7 +99,6 @@ def applyFunction():
     else:
         messagebox.showinfo("Error", "Function not found")    
 
-
 #TK components
 root = tk.Tk()
 root.title("Medical Imaging")
