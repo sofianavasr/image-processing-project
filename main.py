@@ -93,15 +93,13 @@ def processImage():
     canvas.draw()
     canvas.get_tk_widget().pack()    
 
-""" def getMirrorMatrix(image):
-    rows = int(image.Rows)
-    columns = int(image.Columns)
-    return image.PixelArray
-   """  
-
-def getBaseMatrix(borderType):    
+def getBaseMatrix(borderType, borderSize):    
     image = dicom.read_file(lstFilesDCM[file_cb.current()]) 
-    if borderType == 3:
+    if borderType == 1:
+        return np.pad(image.pixel_array, borderSize, mode='symmetric')
+    elif borderType == 2:
+        return np.pad(image.pixel_array, borderSize, mode='edge')
+    elif borderType == 3:
         return image.pixel_array
     
 
@@ -115,26 +113,33 @@ def getValueFromProduct(matrix, kernel):
 
     return int(result)
 
-def applyConvolution(matrix, kernel, borderSize):
+def applyConvolution(matrix, kernel, borderSize, borderType):
     rowsLimit = np.shape(matrix)[0] - borderSize
     columnsLimit = np.shape(matrix)[1] - borderSize
-    finalMatrix = matrix
+    convMatrix = matrix
 
     for i in range(borderSize, rowsLimit):
         for j in range(borderSize, columnsLimit):
             submatrix = matrix[i-1:i+2:1,j-1:j+2:1]
-            finalMatrix[i,j] = getValueFromProduct(submatrix, kernel)
+            convMatrix[i,j] = getValueFromProduct(submatrix, kernel)
     
+    if borderType == 3:
+        finalMatrix = convMatrix
+    else:
+        finalMatrix = convMatrix[borderSize:rowsLimit:1, borderSize:columnsLimit:1]   
+
     plt.imshow(np.flipud(finalMatrix))
     plt.gcf().canvas.set_window_title('Low Pass Filter')     
     plt.show()
      
-def averageFilter(kernelSize, borderType):    
-    matrix = getBaseMatrix(borderType)
+def averageFilter(kernelSize, borderType):        
     kernel = np.ones((kernelSize, kernelSize))
-    kernelFactor = 1/np.sum(kernel)
+    kernelFactor = 1/np.sum(kernel)    
     borderSize = int((kernelSize-1)/2)
-    applyConvolution(matrix, kernel*kernelFactor, borderSize)
+    matrix = getBaseMatrix(borderType, borderSize)
+
+    applyConvolution(matrix, kernel*kernelFactor, borderSize, borderType)
+
     
 def applyFunction():
     function = functions_cb.get()    
