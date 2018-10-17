@@ -17,6 +17,7 @@ import matplotlib.image as mpimg
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from tkinter import messagebox
 from tkinter import simpledialog
+from gaussian_filters import *
 
 lstFilesDCM = []      
 
@@ -87,7 +88,7 @@ def processImage():
     plt.set_cmap(plt.gray())
     f = Figure()
     a = f.add_subplot(111)    
-    a.imshow(np.flipud(imageInfo.pixel_array))     
+    a.imshow(imageInfo.pixel_array)
     canvas.get_tk_widget().destroy()
     canvas = FigureCanvasTkAgg(f, master=root)
     canvas.draw()
@@ -114,10 +115,11 @@ def getValueFromProduct(matrix, kernel):
     return int(result)
 
 def applyConvolution(matrix, kernel, borderSize, borderType):
-    rowsLimit = np.shape(matrix)[0] - borderSize
-    columnsLimit = np.shape(matrix)[1] - borderSize
+    shape = np.shape(matrix)
+    rowsLimit = shape[0] - borderSize
+    columnsLimit = shape[1] - borderSize
     convMatrix = matrix
-
+    
     for i in range(borderSize, rowsLimit):
         for j in range(borderSize, columnsLimit):
             submatrix = matrix[i-1:i+2:1,j-1:j+2:1]
@@ -127,9 +129,9 @@ def applyConvolution(matrix, kernel, borderSize, borderType):
         finalMatrix = convMatrix
     else:
         finalMatrix = convMatrix[borderSize:rowsLimit:1, borderSize:columnsLimit:1]   
-
-    plt.imshow(np.flipud(finalMatrix))
-    plt.gcf().canvas.set_window_title('Low Pass Filter')     
+    
+    plt.imshow(finalMatrix)
+    plt.gcf().canvas.set_window_title('Image Filtering')     
     plt.show()
      
 def averageFilter(kernelSize, borderType):        
@@ -140,19 +142,67 @@ def averageFilter(kernelSize, borderType):
 
     applyConvolution(matrix, kernel*kernelFactor, borderSize, borderType)
 
+def getGaussianKernel(sigma, kernelSize):
+    if sigma == 0.5:
+        if kernelSize == 3:
+            return kernel053
+        elif kernelSize == 5:
+            return kernel055
+        elif kernelSize == 7:
+            return kernel057
+        else:
+            return kernel0511
+    elif sigma == 1.0:
+        if kernelSize == 3:
+            return kernel13
+        elif kernelSize == 5:
+            return kernel15
+        elif kernelSize == 7:
+            return kernel17
+        else:
+            return kernel111
+    else:
+        if kernelSize == 3:
+            return kernel153
+        elif kernelSize == 5:
+            return kernel155
+        elif kernelSize == 7:
+            return kernel157
+        else:
+            return kernel1511
+
+def gaussianFilter(sigma, kernelSize, borderType):
+    kernel = getGaussianKernel(sigma, kernelSize)    
+    borderSize = int((kernelSize-1)/2)
+    matrix = getBaseMatrix(borderType, borderSize)
     
+    applyConvolution(matrix, kernel, borderSize, borderType)
+
 def applyFunction():
     function = functions_cb.get()    
     if function == 'Histogram':
         hist()
-    elif function == 'Average Filter':        
-        kernelSize = simpledialog.askinteger("Kernel Size", "Digit the kernel size\n", parent=root, minvalue=3)       
+    elif function == 'Average filter':        
+        kernelSize = simpledialog.askinteger("Kernel Size", "Digit the kernel size\n", parent=root, minvalue=3, maxvalue=999)       
         if kernelSize % 2 == 0:
             messagebox.showinfo("Warning","The kernel size must be an odd number")
             return
         
         borderType = simpledialog.askinteger("Border Type", "Digit the border type\n\n1. Mirror\n\n2. Replicate\n\n3. Ignore\n", parent=root, minvalue=1, maxvalue=3)
         averageFilter(kernelSize, borderType)
+    elif function == 'Gaussian filter':
+        sigma = simpledialog.askfloat("Sigma", "Choose the desired standard deviation\n\n(0.5, 1.0, 1.5)\n", parent=root)       
+        if sigma != 0.5 and sigma != 1.0 and sigma != 1.5:
+            messagebox.showinfo("Warning","Choose one of the options")
+            return
+
+        kernelSize = simpledialog.askinteger("Kernel Size", "Choose a kernel size\n\n(3, 5, 7, 11)\n", parent=root)       
+        if kernelSize % 2 == 0 and kernelSize < 3 and kernelSize > 11:
+            messagebox.showinfo("Warning","Choose one of the options")
+            return
+
+        borderType = simpledialog.askinteger("Border Type", "Digit the border type\n\n1) Mirror\n\n2) Replicate\n\n3) Ignore\n", parent=root, minvalue=1, maxvalue=3)
+        gaussianFilter(sigma, kernelSize, borderType)
     else:
         messagebox.showinfo("Error", "Function not found")    
 
@@ -182,7 +232,7 @@ process_bt.grid(row=0, column=1, padx=5)
 functions_cb = ttk.Combobox(files_fr, state='readonly')
 functions_cb.set("Select function")
 functions_cb.grid(row=1, column=0, pady=10)
-functions_cb["values"] = ['Histogram', 'Average Filter']
+functions_cb["values"] = ['Histogram', 'Average filter', 'Gaussian filter']
 
 apply_bt = tk.Button(files_fr, text="Apply", command=applyFunction, bg='white', state=DISABLED)
 apply_bt.grid(row=1, column=1, pady=10, padx=5)
