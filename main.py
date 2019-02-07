@@ -178,6 +178,12 @@ def gaussianFilter(sigma, kernelSize, borderType):
     
     applyConvolution(matrix, kernel/1000000, borderSize, borderType)
 
+def rayleigh(borderType):
+    kernel = (ray13/100000000) * ray13Factor
+    matrix = getBaseMatrix(borderType, 1)
+
+    applyConvolution(matrix, kernel, 1, borderType)
+
 # Menu options
 def applyFunction():
     function = functions_cb.get()    
@@ -204,6 +210,9 @@ def applyFunction():
 
         borderType = simpledialog.askinteger("Border Type", "Digit the border type\n\n1) Mirror\n\n2) Replicate\n\n3) Ignore\n", parent=root, minvalue=1, maxvalue=3)
         gaussianFilter(sigma, kernelSize, borderType)
+    elif function == 'Rayleigh filter':
+        borderType = simpledialog.askinteger("Border Type", "Digit the border type\n\n1) Mirror\n\n2) Replicate\n\n3) Ignore\n", parent=root, minvalue=1, maxvalue=3)
+        rayleigh(borderType)   
     else:
         messagebox.showinfo("Error", "Function not found")    
 
@@ -233,7 +242,7 @@ process_bt.grid(row=0, column=1, padx=5)
 functions_cb = ttk.Combobox(files_fr, state='readonly')
 functions_cb.set("Select function")
 functions_cb.grid(row=1, column=0, pady=10)
-functions_cb["values"] = ['Histogram', 'Average filter', 'Gaussian filter']
+functions_cb["values"] = ['Histogram', 'Average filter', 'Gaussian filter', 'Rayleigh filter']
 
 apply_bt = tk.Button(files_fr, text="Apply", command=applyFunction, bg='white', state=DISABLED)
 apply_bt.grid(row=1, column=1, pady=10, padx=5)

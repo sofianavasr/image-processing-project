@@ -144,3 +144,4 @@ def get_kth_pascal_row(row_number):
         last_row = row
     return last_row
 
+print(get_rayleigh_filter())
