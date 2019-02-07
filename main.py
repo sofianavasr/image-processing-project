@@ -112,7 +112,7 @@ def getValueFromProduct(matrix, kernel):
         for j in range(0, size):
             result += matrix[i,j] * kernel[i,j]
 
-    return int(result)
+    return result
 
 def applyConvolution(matrix, kernel, borderSize, borderType):
     shape = np.shape(matrix)
@@ -176,8 +176,9 @@ def gaussianFilter(sigma, kernelSize, borderType):
     borderSize = int((kernelSize-1)/2)
     matrix = getBaseMatrix(borderType, borderSize)
     
-    applyConvolution(matrix, kernel, borderSize, borderType)
+    applyConvolution(matrix, kernel/1000000, borderSize, borderType)
 
+# Menu options
 def applyFunction():
     function = functions_cb.get()    
     if function == 'Histogram':
@@ -197,7 +198,7 @@ def applyFunction():
             return
 
         kernelSize = simpledialog.askinteger("Kernel Size", "Choose a kernel size\n\n(3, 5, 7, 11)\n", parent=root)       
-        if kernelSize % 2 == 0 and kernelSize < 3 and kernelSize > 11:
+        if kernelSize % 2 == 0 or kernelSize < 3 or kernelSize > 11:
             messagebox.showinfo("Warning","Choose one of the options")
             return
 
