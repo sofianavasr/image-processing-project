@@ -17,9 +17,9 @@ import matplotlib.image as mpimg
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from tkinter import messagebox
 from tkinter import simpledialog
-from gaussian_filters import *
+from kernels import *
 
-lstFilesDCM = []      
+lstFilesDCM = [] 
 
 def loadFiles():
     resetSelector()
@@ -77,23 +77,42 @@ def hist():
     
     plt.show()       
             
-def processImage():
-    global canvas        
+def plotImages(newImage):
+    global canvas, canvas2
+    originalImage = dicom.read_file(lstFilesDCM[file_cb.current()]).pixel_array
+
+    plt.set_cmap(plt.gray())
+    f = Figure(figsize=(90,90))
+    a = f.add_subplot(121)  
+    a2 = f.add_subplot(122)
+
+    a.imshow(originalImage)
+    canvas.get_tk_widget().destroy()
+    canvas = FigureCanvasTkAgg(f, master=left_image_fr)
+    
+    canvas.draw()
+    canvas.get_tk_widget().pack()    
+   
+    a2.imshow(newImage)
+    canvas2.get_tk_widget().destroy()
+    canvas2 = FigureCanvasTkAgg(f, master=right_image_fr)
+    
+    canvas2.draw()
+    canvas2.get_tk_widget().pack()
+
+def processImage():        
     text_fr.pack()   
+    images_fr.pack(fill='both', expand=True)
+    left_image_fr.pack(fill='both', expand=True)
+    right_image_fr.pack(fill='both', expand=True)
+  
     apply_bt.configure(state=NORMAL)
 
     imageInfo = dicom.read_file(lstFilesDCM[file_cb.current()])
     showHeaderInfo(imageInfo)
-    
-    plt.set_cmap(plt.gray())
-    f = Figure()
-    a = f.add_subplot(111)    
-    a.imshow(imageInfo.pixel_array)
-    canvas.get_tk_widget().destroy()
-    canvas = FigureCanvasTkAgg(f, master=root)
-    canvas.draw()
-    canvas.get_tk_widget().pack()    
 
+    plotImages(imageInfo.pixel_array)
+        
 def getBaseMatrix(borderType, borderSize):    
     image = dicom.read_file(lstFilesDCM[file_cb.current()]) 
     if borderType == 1:
@@ -103,7 +122,6 @@ def getBaseMatrix(borderType, borderSize):
     elif borderType == 3:
         return image.pixel_array
     
-
 def getValueFromProduct(matrix, kernel):
     size = np.shape(matrix)[0]
     result = 0
@@ -118,11 +136,11 @@ def applyConvolution(matrix, kernel, borderSize, borderType):
     shape = np.shape(matrix)
     rowsLimit = shape[0] - borderSize
     columnsLimit = shape[1] - borderSize
-    convMatrix = matrix
+    convMatrix = np.copy(matrix)
     
     for i in range(borderSize, rowsLimit):
         for j in range(borderSize, columnsLimit):
-            submatrix = matrix[i-1:i+2:1,j-1:j+2:1]
+            submatrix = matrix[i-1:i+2:1,j-1:j+2:1]           
             convMatrix[i,j] = getValueFromProduct(submatrix, kernel)
     
     if borderType == 3:
@@ -130,10 +148,13 @@ def applyConvolution(matrix, kernel, borderSize, borderType):
     else:
         finalMatrix = convMatrix[borderSize:rowsLimit:1, borderSize:columnsLimit:1]   
     
-    plt.imshow(finalMatrix)
+    """ plt.imshow(finalMatrix)
     plt.gcf().canvas.set_window_title('Image Filtering')     
     plt.show()
-     
+ """
+    plotImages(finalMatrix)
+    return finalMatrix
+   
 def averageFilter(kernelSize, borderType):        
     kernel = np.ones((kernelSize, kernelSize))
     kernelFactor = 1/np.sum(kernel)    
@@ -184,6 +205,26 @@ def rayleigh(borderType):
 
     applyConvolution(matrix, kernel, 1, borderType)
 
+def getSobelGradient(gradientX, gradientY):
+    shape = np.shape(gradientX)
+    
+    gradient = np.empty(shape[0])
+    
+    for i in range(0, shape[0]):
+        for j in range(0, shape[1]):
+            gradient[i, j] = abs(gradientX[i, j]) + abs(gradientY[i, j])
+    return gradient
+
+def sobel():
+    #FIXME: dont process the original image, process the one who is filtered
+    filteredImage = dicom.read_file(lstFilesDCM[file_cb.current()]).pixel_array
+    
+    gradientX = applyConvolution(filteredImage, sobelx, 1, 3)
+    gradientY = applyConvolution(filteredImage, sobely, 1, 3)
+    
+    gradient = getSobelGradient(gradientX, gradientY)
+    plotImages(gradient)
+
 # Menu options
 def applyFunction():
     function = functions_cb.get()    
@@ -213,6 +254,8 @@ def applyFunction():
     elif function == 'Rayleigh filter':
         borderType = simpledialog.askinteger("Border Type", "Digit the border type\n\n1) Mirror\n\n2) Replicate\n\n3) Ignore\n", parent=root, minvalue=1, maxvalue=3)
         rayleigh(borderType)   
+    elif function == 'Sobel':
+        sobel()
     else:
         messagebox.showinfo("Error", "Function not found")    
 
@@ -220,7 +263,7 @@ def applyFunction():
 root = tk.Tk()
 root.title("Medical Imaging")
 root.configure(background='pink')
-root.geometry('%dx%d+%d+%d' % (700, root.winfo_screenheight(), 0, 0))
+root.geometry('%dx%d+%d+%d' % (root.winfo_screenwidth(), root.winfo_screenheight(), 0, 0))
 
 selectFolder_fr = Frame(root)
 selectFolder_fr.configure(background='pink')
@@ -242,7 +285,7 @@ process_bt.grid(row=0, column=1, padx=5)
 functions_cb = ttk.Combobox(files_fr, state='readonly')
 functions_cb.set("Select function")
 functions_cb.grid(row=1, column=0, pady=10)
-functions_cb["values"] = ['Histogram', 'Average filter', 'Gaussian filter', 'Rayleigh filter']
+functions_cb["values"] = ['Histogram', 'Average filter', 'Gaussian filter', 'Rayleigh filter', 'Sobel']
 
 apply_bt = tk.Button(files_fr, text="Apply", command=applyFunction, bg='white', state=DISABLED)
 apply_bt.grid(row=1, column=1, pady=10, padx=5)
@@ -253,7 +296,15 @@ text_fr.configure(background='pink')
 info_text = tk.Text(text_fr, width = 90, height = 11)
 info_text.pack(pady=20)
 
+images_fr = Frame(root)
+images_fr.configure(background='pink')
+
+left_image_fr = Frame(images_fr)
+right_image_fr = Frame(images_fr)
+
 f = Figure()
-canvas = FigureCanvasTkAgg(f, master=root)
+
+canvas = FigureCanvasTkAgg(f, master=left_image_fr)
+canvas2 = FigureCanvasTkAgg(f, master=right_image_fr)
 
 root.mainloop()
