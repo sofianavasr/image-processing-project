@@ -1,5 +1,6 @@
 import numpy as np
-  
+
+#gaussian kernels
 kernel053 = np.matrix('24879 107973 24879; \
                        107973 468592 107973; \
                        24879 107973 24879')                       
@@ -78,7 +79,41 @@ kernel1511 = np.matrix('2 1 47 136 259 32 259 136 47 1 2; \
                         47 322 1443 4212 8008 9921 8008 4212 1443 322 47; \
                         1 72 322 939 1785 2212 1785 939 322 72 1; \
                         2 1 47 136 259 32 259 136 47 1 2')
+#rayleight kernels
 ray13Factor = 1.2995755734477323
 ray13 = np.matrix('0 0 0; \
                    0 36787944 16417000; \
                    0 16417000 7326256')
+
+#sobel kernels
+sobelx = np.matrix('-1 0 1; -2 0 2; -1 0 1')
+sobely = np.matrix('-1 -2 -1; 0 0 0; 1 2 1')
+
+
+""" img = np.matrix('180 180 50 14; 206 100 5 124; 194 68 197 251; 172 106 207 233; 180 88 179 209')
+
+def conv(matrix, kernel, borderSize, borderType):
+    shape = np.shape(matrix)
+    rowsLimit = shape[0] - borderSize
+    columnsLimit = shape[1] - borderSize
+    convMatrix = np.copy(matrix)
+    
+    for i in range(borderSize, rowsLimit):
+        for j in range(borderSize, columnsLimit):
+            submatrix = matrix[i-borderSize:i+borderSize+1:1,j-borderSize:j+borderSize+1:1]              
+            convMatrix[i,j] = np.sum(np.multiply(submatrix, kernel))
+    
+    if borderType == 3:
+        finalMatrix = convMatrix
+    else:
+        finalMatrix = convMatrix[borderSize:rowsLimit:1, borderSize:columnsLimit:1]   
+      
+    return finalMatrix
+
+
+gradientY = conv(img, sobely, 1, 3)
+gradientX = conv(img, sobelx, 1, 3)
+    
+gradient = np.absolute(gradientX) + np.absolute(gradientY)
+
+print(gradient) """
