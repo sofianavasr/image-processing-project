@@ -88,3 +88,32 @@ ray13 = np.matrix('0 0 0; \
 #sobel kernels
 sobelx = np.matrix('-1 0 1; -2 0 2; -1 0 1')
 sobely = np.matrix('-1 -2 -1; 0 0 0; 1 2 1')
+
+
+""" img = np.matrix('180 180 50 14; 206 100 5 124; 194 68 197 251; 172 106 207 233; 180 88 179 209')
+
+def conv(matrix, kernel, borderSize, borderType):
+    shape = np.shape(matrix)
+    rowsLimit = shape[0] - borderSize
+    columnsLimit = shape[1] - borderSize
+    convMatrix = np.copy(matrix)
+    
+    for i in range(borderSize, rowsLimit):
+        for j in range(borderSize, columnsLimit):
+            submatrix = matrix[i-borderSize:i+borderSize+1:1,j-borderSize:j+borderSize+1:1]              
+            convMatrix[i,j] = np.sum(np.multiply(submatrix, kernel))
+    
+    if borderType == 3:
+        finalMatrix = convMatrix
+    else:
+        finalMatrix = convMatrix[borderSize:rowsLimit:1, borderSize:columnsLimit:1]   
+      
+    return finalMatrix
+
+
+gradientY = conv(img, sobely, 1, 3)
+gradientX = conv(img, sobelx, 1, 3)
+    
+gradient = np.absolute(gradientX) + np.absolute(gradientY)
+
+print(gradient) """
