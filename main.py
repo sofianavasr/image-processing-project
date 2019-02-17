@@ -159,10 +159,27 @@ def averageFilter(image, kernelSize, borderType):
     plotImages(finalMatrix)
     processImage = finalMatrix
 
-#def mediana(image, kernelSize, borderType):
+def medianFilter(image, kernelSize, borderType):
+    global processImage
+    
+    borderSize = int((kernelSize-1)/2)
+    shape = np.shape(image)
+    rowsLimit = shape[0] - borderSize
+    columnsLimit = shape[1] - borderSize
+    medMatrix = np.copy(image)
+    
+    for i in range(borderSize, rowsLimit):
+        for j in range(borderSize, columnsLimit):
+            submatrix = image[i-borderSize:i+borderSize+1:1,j-borderSize:j+borderSize+1:1]        
+            medMatrix[i,j] = np.median(np.asarray(submatrix))
+    
+    if borderType == 3:
+        finalMatrix = medMatrix
+    else:
+        finalMatrix = medMatrix[borderSize:rowsLimit+1:1, borderSize:columnsLimit+1:1]
 
-
-
+    plotImages(finalMatrix)
+    processImage = finalMatrix
 
 def getGaussianKernel(sigma, kernelSize):
     if sigma == 0.5:
@@ -264,6 +281,14 @@ def applyFunction():
         rayleigh(currentImage, borderType)   
     elif function == 'Sobel':
         sobel(currentImage)
+    elif function == 'Median filter':
+        kernelSize = simpledialog.askinteger("Kernel Size", "Digit the kernel size\n", parent=root, minvalue=3, maxvalue=999)       
+        if kernelSize % 2 == 0:
+            messagebox.showinfo("Warning","The kernel size must be an odd number")
+            return
+        
+        borderType = simpledialog.askinteger("Border Type", "Digit the border type\n\n1. Mirror\n\n2. Replicate\n\n3. Ignore\n", parent=root, minvalue=1, maxvalue=3)
+        medianFilter(currentImage, kernelSize, borderType)
     else:
         messagebox.showinfo("Error", "Function not found")    
 
@@ -298,7 +323,7 @@ image_cb.grid(row=1, column=0, pady=10, padx=5)
 functions_cb = ttk.Combobox(files_fr, state='readonly')
 functions_cb.set("Select function")
 functions_cb.grid(row=1, column=1, pady=10)
-functions_cb["values"] = ['Histogram', 'Average filter', 'Gaussian filter', 'Rayleigh filter', 'Sobel']
+functions_cb["values"] = ['Histogram', 'Average filter', 'Gaussian filter', 'Rayleigh filter', 'Median filter', 'Sobel']
 
 apply_bt = tk.Button(files_fr, text="Apply", command=applyFunction, bg='white', state=DISABLED)
 apply_bt.grid(row=1, column=2, pady=10, padx=5)

@@ -92,7 +92,7 @@ sobely = np.matrix('-1 -2 -1; 0 0 0; 1 2 1')
 
 """ img = np.matrix('180 180 50 14; 206 100 5 124; 194 68 197 251; 172 106 207 233; 180 88 179 209')
 
-def conv(matrix, kernel, borderSize, borderType):
+def con(matrix, kernel, borderSize, borderType):
     shape = np.shape(matrix)
     rowsLimit = shape[0] - borderSize
     columnsLimit = shape[1] - borderSize
@@ -101,6 +101,7 @@ def conv(matrix, kernel, borderSize, borderType):
     for i in range(borderSize, rowsLimit):
         for j in range(borderSize, columnsLimit):
             submatrix = matrix[i-borderSize:i+borderSize+1:1,j-borderSize:j+borderSize+1:1]              
+            print(np.median(np.asarray(submatrix)))
             convMatrix[i,j] = np.sum(np.multiply(submatrix, kernel))
     
     if borderType == 3:
@@ -111,9 +112,10 @@ def conv(matrix, kernel, borderSize, borderType):
     return finalMatrix
 
 
-gradientY = conv(img, sobely, 1, 3)
-gradientX = conv(img, sobelx, 1, 3)
+gradientY = con(img, sobely, 1, 3)
+gradientX = con(img, sobelx, 1, 3)
     
 gradient = np.absolute(gradientX) + np.absolute(gradientY)
 
-print(gradient) """
+print(gradient)
+ """
