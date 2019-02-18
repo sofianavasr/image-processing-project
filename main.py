@@ -43,6 +43,7 @@ def resetSelector():
     info_text.delete('1.0', END)
     file_cb.set("Select a DICOM file")
     functions_cb.set("Select function")
+    image_cb.set("Choose an image")
     apply_bt.configure(state=DISABLED)    
     
 def showHeaderInfo(header):
@@ -77,6 +78,7 @@ def hist(image):
     fig.canvas.set_window_title('Histogram')       
     
     plt.show()   
+    return intensity
 
 
 def plotImages(newImage):
@@ -246,6 +248,59 @@ def sobel(image):
     plotImages(gradient)
     processImage = gradient
 
+def getOtsuThreshold(image):
+    his, _ = np.histogram(image, np.arange(0, tones))
+    rowsSize = np.shape(image)[0]
+    columnsSize = np.shape(image)[1]
+
+    totalPixels = rowsSize * columnsSize
+    
+    summ = 0.0
+    for i in range(0, tones-1):
+        summ += i * his[i]
+    
+    sumB = 0.0
+    wB = 0.0
+    wF = 0.0
+    varMax = 0.0
+    threshold = 0.0
+
+    for i in range(0, tones-1):
+        wB += his[i]
+        if wB == 0:
+            continue
+        
+        wF = totalPixels - wB
+        if wF == 0:
+            break
+        
+        sumB += i * his[i]
+
+        mB = sumB/wB
+        mF = (summ - sumB)/wF
+
+        varBetween = wB * wF * (mB-mF) * (mB-mF)
+        
+        if(varBetween > varMax):
+            varMax = varBetween
+            threshold = i
+    
+    return threshold
+
+def otsu(image):
+    global processImage
+    threshold = getOtsuThreshold(image)
+
+    for i in range(0, rowsSize):
+        for j in range(0, columnsSize):
+            if image[i, j] < threshold:
+                image[i, j] = 0
+                continue
+            image[i, j] = 1
+    
+    plotImages(image)
+    processImage = image
+
 # Menu options
 def applyFunction():
     currentImage = np.copy(processImage)
@@ -253,8 +308,10 @@ def applyFunction():
         currentImage = np.copy(baseImage)
     
     function = functions_cb.get()    
+
     if function == 'Histogram':
         hist(currentImage)
+
     elif function == 'Average filter':        
         kernelSize = simpledialog.askinteger("Kernel Size", "Digit the kernel size\n", parent=root, minvalue=3, maxvalue=999)       
         if kernelSize % 2 == 0:
@@ -263,6 +320,7 @@ def applyFunction():
         
         borderType = simpledialog.askinteger("Border Type", "Digit the border type\n\n1. Mirror\n\n2. Replicate\n\n3. Ignore\n", parent=root, minvalue=1, maxvalue=3)
         averageFilter(currentImage, kernelSize, borderType)
+
     elif function == 'Gaussian filter':
         sigma = simpledialog.askfloat("Sigma", "Choose the desired standard deviation\n\n(0.5, 1.0, 1.5)\n", parent=root)       
         if sigma != 0.5 and sigma != 1.0 and sigma != 1.5:
@@ -276,11 +334,14 @@ def applyFunction():
 
         borderType = simpledialog.askinteger("Border Type", "Digit the border type\n\n1) Mirror\n\n2) Replicate\n\n3) Ignore\n", parent=root, minvalue=1, maxvalue=3)
         gaussianFilter(currentImage, sigma, kernelSize, borderType)
+
     elif function == 'Rayleigh filter':
         borderType = simpledialog.askinteger("Border Type", "Digit the border type\n\n1) Mirror\n\n2) Replicate\n\n3) Ignore\n", parent=root, minvalue=1, maxvalue=3)
-        rayleigh(currentImage, borderType)   
+        rayleigh(currentImage, borderType) 
+
     elif function == 'Sobel':
         sobel(currentImage)
+
     elif function == 'Median filter':
         kernelSize = simpledialog.askinteger("Kernel Size", "Digit the kernel size\n", parent=root, minvalue=3, maxvalue=999)       
         if kernelSize % 2 == 0:
@@ -289,6 +350,10 @@ def applyFunction():
         
         borderType = simpledialog.askinteger("Border Type", "Digit the border type\n\n1. Mirror\n\n2. Replicate\n\n3. Ignore\n", parent=root, minvalue=1, maxvalue=3)
         medianFilter(currentImage, kernelSize, borderType)
+
+    elif function == 'Otsu':
+        otsu(currentImage)
+
     else:
         messagebox.showinfo("Error", "Function not found")    
 
@@ -323,7 +388,7 @@ image_cb.grid(row=1, column=0, pady=10, padx=5)
 functions_cb = ttk.Combobox(files_fr, state='readonly')
 functions_cb.set("Select function")
 functions_cb.grid(row=1, column=1, pady=10)
-functions_cb["values"] = ['Histogram', 'Average filter', 'Gaussian filter', 'Rayleigh filter', 'Median filter', 'Sobel']
+functions_cb["values"] = ['Histogram', 'Average filter', 'Gaussian filter', 'Rayleigh filter', 'Median filter', 'Sobel', 'Otsu']
 
 apply_bt = tk.Button(files_fr, text="Apply", command=applyFunction, bg='white', state=DISABLED)
 apply_bt.grid(row=1, column=2, pady=10, padx=5)
