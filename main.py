@@ -291,8 +291,8 @@ def otsu(image):
     global processImage
     threshold = getOtsuThreshold(image)
 
-    for i in range(0, rowsSize):
-        for j in range(0, columnsSize):
+    for i in range(0, np.shape(image)[0]):
+        for j in range(0, np.shape(image)[1]):
             if image[i, j] < threshold:
                 image[i, j] = 0
                 continue
