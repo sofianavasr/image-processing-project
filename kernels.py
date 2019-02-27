@@ -1,4 +1,5 @@
 import numpy as np
+import math
 
 #gaussian kernels
 kernel053 = np.matrix('24879 107973 24879; \
@@ -118,4 +119,37 @@ gradientX = con(img, sobelx, 1, 3)
 gradient = np.absolute(gradientX) + np.absolute(gradientY)
 
 print(gradient)
+ """
+
+
+""" def ots(image):    
+    threshold = 50
+
+    for i in range(0, np.shape(image)[0]):
+        for j in range(0, np.shape(image)[1]):
+            if image[i, j] < threshold:
+                image[i, j] = 0
+                continue
+            image[i, j] = 1
+    
+    print(image)
+
+
+img = np.matrix('180 180 50 14 12 11; 206 100 5 124 1 12; 194 68 197 251 2 4; 172 106 207 233 5 7; 180 88 179 209 3 65; 55 6 3 6 8 4')
+print(img, "\n---------------------------------------------------------------------------------------------\n")
+
+rowsLimit, columnsLimit = np.shape(img)
+
+borderSize = 3
+
+convMatrix = np.copy(img)
+    
+for i in range(0, rowsLimit, borderSize):
+    for j in range(0, columnsLimit, borderSize):
+        submatrix = img[i:i+borderSize:1,j:j+borderSize:1]        
+        
+        ots(submatrix)
+        print("\n", img)
+        print("\n-----------------------------------------------------------\n")        
+        
  """
