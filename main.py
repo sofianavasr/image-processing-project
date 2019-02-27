@@ -301,6 +301,29 @@ def otsu(image):
     plotImages(image)
     processImage = image
 
+def otsuByRegionsAux(image):
+    rows, columns = np.shape(image)    
+    threshold = getOtsuThreshold(image)
+
+    for i in range(0, rows):
+        for j in range(0, columns):
+            if image[i, j] < threshold:
+                image[i, j] = 0
+                continue
+            image[i, j] = 1
+
+def applyOtsuByRegions(image, regionSize):
+    global processImage
+    rowsLimit, columnsLimit = np.shape(image)
+        
+    for i in range(0, rowsLimit, regionSize):
+        for j in range(0, columnsLimit, regionSize):
+            region = image[i:i+regionSize:1,j:j+regionSize:1]
+            otsuByRegionsAux(region)
+    
+    plotImages(image)
+    processImage = image
+
 # Menu options
 def applyFunction():
     currentImage = np.copy(processImage)
@@ -351,9 +374,11 @@ def applyFunction():
         borderType = simpledialog.askinteger("Border Type", "Digit the border type\n\n1. Mirror\n\n2. Replicate\n\n3. Ignore\n", parent=root, minvalue=1, maxvalue=3)
         medianFilter(currentImage, kernelSize, borderType)
 
-    elif function == 'Otsu':
+    elif function == 'Otsu total':
         otsu(currentImage)
-
+    elif function == 'Otsu by regions':
+        regionSize = simpledialog.askinteger("Region size", "Digit the region size\n", parent=root, minvalue=8, maxvalue=256)
+        applyOtsuByRegions(currentImage, regionSize)
     else:
         messagebox.showinfo("Error", "Function not found")    
 
@@ -388,7 +413,7 @@ image_cb.grid(row=1, column=0, pady=10, padx=5)
 functions_cb = ttk.Combobox(files_fr, state='readonly')
 functions_cb.set("Select function")
 functions_cb.grid(row=1, column=1, pady=10)
-functions_cb["values"] = ['Histogram', 'Average filter', 'Gaussian filter', 'Rayleigh filter', 'Median filter', 'Sobel', 'Otsu']
+functions_cb["values"] = ['Histogram', 'Average filter', 'Gaussian filter', 'Rayleigh filter', 'Median filter', 'Sobel', 'Otsu total', 'Otsu by regions']
 
 apply_bt = tk.Button(files_fr, text="Apply", command=applyFunction, bg='white', state=DISABLED)
 apply_bt.grid(row=1, column=2, pady=10, padx=5)
