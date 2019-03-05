@@ -18,13 +18,16 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from tkinter import messagebox
 from tkinter import simpledialog
 from kernels import *
+from PIL import Image
 
 lstFilesDCM = [] 
 baseImage = np.zeros(512, float)
 processedImage = np.zeros(512, float)
 tones = 65536
+testImage = False
 
 def loadFiles():
+    global testImage
     resetSelector()
     folder =  filedialog.askdirectory()    
     lstFilenames = []
@@ -33,18 +36,23 @@ def loadFiles():
             if ".dcm" in filename.lower():
                 lstFilesDCM.append(os.path.join(dirName,filename))
                 lstFilenames.append(filename)
+            elif ".jpg" in filename.lower():
+                lstFilesDCM.append(os.path.join(dirName,filename))
+                lstFilenames.append(filename)
+                testImage = True
     
     file_cb["values"] = lstFilenames    
     files_fr.pack() 
 
 def resetSelector():
-    global lstFilesDCM, baseImage
+    global lstFilesDCM, testImage
     lstFilesDCM.clear()
     info_text.delete('1.0', END)
     file_cb.set("Select a DICOM file")
     functions_cb.set("Select function")
     image_cb.set("Choose an image")
     apply_bt.configure(state=DISABLED)    
+    testImage = False
     
 def showHeaderInfo(header):
     info_text.delete('1.0', END)
@@ -102,6 +110,11 @@ def plotImages(newImage):
     canvas2.draw()
     canvas2.get_tk_widget().pack()
 
+def plotTest(image):
+    plt.imshow(image)
+    plt.gcf().canvas.set_window_title('Image Test')     
+    plt.show()
+
 def processImage():      
     global baseImage, processImage
     text_fr.pack()   
@@ -110,12 +123,17 @@ def processImage():
     right_image_fr.pack(fill='both', expand=True)
   
     apply_bt.configure(state=NORMAL)
-
-    imageInfo = dicom.read_file(lstFilesDCM[file_cb.current()])
-    showHeaderInfo(imageInfo)
-    baseImage = np.copy(imageInfo.pixel_array)
-    processImageImage = np.copy(imageInfo.pixel_array)
-
+    
+    if testImage:
+        img = Image.open('lenna.jpg')
+        baseImage = np.asarray(img)           
+        processImage = np.asarray(img)
+    else:
+        imageInfo = dicom.read_file(lstFilesDCM[file_cb.current()])
+        showHeaderInfo(imageInfo)
+        baseImage = np.copy(imageInfo.pixel_array)
+        processImage = np.copy(imageInfo.pixel_array)
+    
     plotImages(baseImage)
         
 def getBaseMatrix(image, borderType, borderSize):    
@@ -250,8 +268,7 @@ def sobel(image):
 
 def getOtsuThreshold(image):
     his, _ = np.histogram(image, np.arange(0, tones))
-    rowsSize = np.shape(image)[0]
-    columnsSize = np.shape(image)[1]
+    rowsSize, columnsSize = np.shape(image)    
 
     totalPixels = rowsSize * columnsSize
     
@@ -376,9 +393,11 @@ def applyFunction():
 
     elif function == 'Otsu total':
         otsu(currentImage)
+
     elif function == 'Otsu by regions':
         regionSize = simpledialog.askinteger("Region size", "Digit the region size\n", parent=root, minvalue=8, maxvalue=256)
-        applyOtsuByRegions(currentImage, regionSize)
+        applyOtsuByRegions(currentImage, regionSize)   
+        
     else:
         messagebox.showinfo("Error", "Function not found")    
 
