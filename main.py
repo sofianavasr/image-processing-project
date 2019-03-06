@@ -125,7 +125,7 @@ def processImage():
     apply_bt.configure(state=NORMAL)
     
     if testImage:
-        img = Image.open('lenna.jpg')
+        img = Image.open(lstFilesDCM[file_cb.current()])
         baseImage = np.asarray(img)           
         processImage = np.asarray(img)
     else:
@@ -341,6 +341,44 @@ def applyOtsuByRegions(image, regionSize):
     plotImages(image)
     processImage = image
 
+def calculateCentroids(image, centroids):
+    rows, columns = np.shape(image)
+    groups = [[] for i in range(len(centroids))]
+    
+    for i in range(0, rows):
+        for j in range(0, columns):
+            distance = list(map(lambda x: abs(x-image[i,j]), centroids))
+            minDistanceIndex = distance.index(min(distance))
+            groups[minDistanceIndex].append(image[i,j])            
+    
+    newCentroids = [0]*len(centroids)
+    for i in range(0, len(centroids)):
+        try:
+            newCentroids[i] = int(round(sum(groups[i]) / len(groups[i])))
+        except:
+            messagebox.showinfo("Warning","Choose better centroids")
+
+    print(centroids, newCentroids)
+
+    return centroids==newCentroids, newCentroids, groups
+       
+
+def kmeans(image, baseCentroids, colors):    
+    global processImage
+    shouldFinish, newCentroids, groups = calculateCentroids(image, baseCentroids)
+    
+    while not shouldFinish:
+        shouldFinish, newCentroids, groups = calculateCentroids(image, newCentroids)        
+   
+    newImage = np.copy(image)
+    
+    for i in range(0, len(groups)):
+        for j in groups[i]:
+            newImage[image==j] = colors[i]
+    
+    plotImages(newImage)
+    processImage = newImage
+
 # Menu options
 def applyFunction():
     currentImage = np.copy(processImage)
@@ -397,7 +435,17 @@ def applyFunction():
     elif function == 'Otsu by regions':
         regionSize = simpledialog.askinteger("Region size", "Digit the region size\n", parent=root, minvalue=8, maxvalue=256)
         applyOtsuByRegions(currentImage, regionSize)   
-        
+
+    elif function == 'k-means':
+        k = simpledialog.askinteger("Define K", "Digit the K size\n", parent=root, minvalue=1, maxvalue=5)
+        centroids = []
+        colors = []
+        for i in range(0, k):
+            centroids.append(simpledialog.askinteger("Centroids", 'Digit the centroid number %d \n'%(i+1), parent=root, minvalue=0, maxvalue=511))
+        for i in range(0, k):
+            colors.append(simpledialog.askinteger("Colors", 'Digit the value of the color number %d \n'%(i+1), parent=root, minvalue=0, maxvalue=511))
+        kmeans(currentImage, centroids, colors)
+
     else:
         messagebox.showinfo("Error", "Function not found")    
 
@@ -432,7 +480,7 @@ image_cb.grid(row=1, column=0, pady=10, padx=5)
 functions_cb = ttk.Combobox(files_fr, state='readonly')
 functions_cb.set("Select function")
 functions_cb.grid(row=1, column=1, pady=10)
-functions_cb["values"] = ['Histogram', 'Average filter', 'Gaussian filter', 'Rayleigh filter', 'Median filter', 'Sobel', 'Otsu total', 'Otsu by regions']
+functions_cb["values"] = ['Histogram', 'Average filter', 'Gaussian filter', 'Rayleigh filter', 'Median filter', 'Sobel', 'Otsu total', 'Otsu by regions', 'k-means']
 
 apply_bt = tk.Button(files_fr, text="Apply", command=applyFunction, bg='white', state=DISABLED)
 apply_bt.grid(row=1, column=2, pady=10, padx=5)
