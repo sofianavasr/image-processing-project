@@ -1,5 +1,6 @@
 import numpy as np
 import math
+from PIL import Image
 
 #gaussian kernels
 kernel053 = np.matrix('24879 107973 24879; \
@@ -153,3 +154,46 @@ for i in range(0, rowsLimit, borderSize):
         print("\n-----------------------------------------------------------\n")        
         
  """
+
+""" def calculateCentroids(image, centroids):
+    rows, columns = np.shape(image)
+    groups = [[] for i in range(len(centroids))]
+    
+    for i in range(0, rows):
+        for j in range(0, columns):
+            distance = list(map(lambda x: abs(x-image[i,j]), centroids))
+            minDistanceIndex = distance.index(min(distance))
+            groups[minDistanceIndex].append(image[i,j])            
+    
+    newCentroids = [0]*len(centroids)
+    for i in range(0, len(centroids)):
+        #if len(groups[i]) == 0:
+            
+        newCentroids[i] = int(round(sum(groups[i]) / len(groups[i])))
+        print(centroids, newCentroids)
+
+    return centroids==newCentroids, newCentroids, groups
+       
+
+def kmeans(image, baseCentroids):    
+    shouldFinish, newCentroids, groups = calculateCentroids(image, baseCentroids)
+    
+    while not shouldFinish:
+        shouldFinish, newCentroids, groups = calculateCentroids(image, newCentroids)        
+    colors = [50, 167, 255]
+    newImage = np.copy(image)
+    
+    for i in range(0, len(groups)):
+        for j in groups[i]:
+            newImage[image==j] = colors[i]
+    
+    return newImage
+    
+img = Image.open('lenna.jpg')
+baseImage = np.asarray(img)
+
+#mat = np.matrix('4 7 10; 15 20 12; 14 21 13')
+a = [60, 123, 180]
+
+groups = kmeans(baseImage, a)    
+print(groups) """
