@@ -103,6 +103,10 @@ def plotImages(newImage):
     canvas.draw()
     canvas.get_tk_widget().pack()    
    
+    plt.imshow(baseImage)
+    plt.gcf().canvas.set_window_title('Image Filtering')     
+    plt.show()
+
     a2.imshow(newImage)
     canvas2.get_tk_widget().destroy()
     canvas2 = FigureCanvasTkAgg(f, master=right_image_fr)
@@ -440,10 +444,10 @@ def applyFunction():
         k = simpledialog.askinteger("Define K", "Digit the K size\n", parent=root, minvalue=1, maxvalue=5)
         centroids = []
         colors = []
-        for i in range(0, k):
-            centroids.append(simpledialog.askinteger("Centroids", 'Digit the centroid number %d \n'%(i+1), parent=root, minvalue=0, maxvalue=511))
-        for i in range(0, k):
-            colors.append(simpledialog.askinteger("Colors", 'Digit the value of the color number %d \n'%(i+1), parent=root, minvalue=0, maxvalue=511))
+        for i in range(0, int(k)):
+            centroids.append(simpledialog.askinteger("Centroids", 'Digit the centroid number %d \n'%(i+1), parent=root, minvalue=0, maxvalue=tones))
+        for i in range(0, int(k)):
+            colors.append(simpledialog.askinteger("Colors", 'Digit the value of the color number %d \n'%(i+1), parent=root, minvalue=0, maxvalue=tones))
         kmeans(currentImage, centroids, colors)
 
     else:
