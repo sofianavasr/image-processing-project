@@ -102,10 +102,6 @@ def plotImages(newImage):
     
     canvas.draw()
     canvas.get_tk_widget().pack()    
-   
-    plt.imshow(baseImage)
-    plt.gcf().canvas.set_window_title('Image Filtering')     
-    plt.show()
 
     a2.imshow(newImage)
     canvas2.get_tk_widget().destroy()
@@ -383,6 +379,25 @@ def kmeans(image, baseCentroids, colors):
     plotImages(newImage)
     processImage = newImage
 
+def erosion(image):
+    global processImage
+
+    s = np.asmatrix(np.array([[1,1,1],[1,1,1],[1,1,1]])) 
+
+    rowsLimit, columnsLimit = np.shape(image)
+    kernelSize = np.shape(s)
+    finalMatrix = np.copy(image)
+
+    for i in range(0, rowsLimit):
+        for j in range(0, columnsLimit):
+            submatrix = image[i:i+kernelSize[0]:1,j:j+kernelSize[0]:1]
+            finalMatrix[i, j] = 0
+            if np.array_equal(submatrix, s):            
+                finalMatrix[i, j] = image[i, j]            
+      
+    plotImages(finalMatrix)
+    processImage = finalMatrix
+
 # Menu options
 def applyFunction():
     currentImage = np.copy(processImage)
@@ -450,6 +465,9 @@ def applyFunction():
             colors.append(simpledialog.askinteger("Colors", 'Digit the value of the color number %d \n'%(i+1), parent=root, minvalue=0, maxvalue=tones))
         kmeans(currentImage, centroids, colors)
 
+    elif function == 'erosion':
+        erosion(currentImage)
+
     else:
         messagebox.showinfo("Error", "Function not found")    
 
@@ -484,7 +502,7 @@ image_cb.grid(row=1, column=0, pady=10, padx=5)
 functions_cb = ttk.Combobox(files_fr, state='readonly')
 functions_cb.set("Select function")
 functions_cb.grid(row=1, column=1, pady=10)
-functions_cb["values"] = ['Histogram', 'Average filter', 'Gaussian filter', 'Rayleigh filter', 'Median filter', 'Sobel', 'Otsu total', 'Otsu by regions', 'k-means']
+functions_cb["values"] = ['Histogram', 'Average filter', 'Gaussian filter', 'Rayleigh filter', 'Median filter', 'Sobel', 'Otsu total', 'Otsu by regions', 'k-means', 'erosion']
 
 apply_bt = tk.Button(files_fr, text="Apply", command=applyFunction, bg='white', state=DISABLED)
 apply_bt.grid(row=1, column=2, pady=10, padx=5)
