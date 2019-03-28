@@ -27,15 +27,6 @@ tones = 65536
 testImage = False #flag needed for no dicom images
 undo = np.zeros(512, float) #stores the image before applying any function
 
-colorBlack = [0,0,0]
-colorGreen = [0,50,0]
-colorRed = [255,0,0]
-colorBlue = [0,0,100]
-colorWhite = [255,255,255]
-colorYellow = [255,255,0]
-colorPink = [255,0,255]
-colors3 = [colorBlack, colorBlue, colorGreen, colorPink, colorRed, colorWhite, colorYellow]
-
 def loadFiles():
     global testImage
     resetSelector()
@@ -127,6 +118,8 @@ def plotTest(image):
     plt.show()
 
 def undoFunction():
+    global processImage
+    processImage = np.copy(undo)
     plotImages(undo)
 
 def processImage():      
@@ -384,10 +377,11 @@ def kmeans(image, baseCentroids):
     
     for i in range(0, len(groups)):
         for j in groups[i]:
-            newImage[image==j] = baseCentroids[i]
-    
+            newImage[image==j] = newCentroids[i]
+   
     plotImages(newImage)
     processImage = newImage
+
 
 def erosion(image):
     global processImage
