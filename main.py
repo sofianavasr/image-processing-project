@@ -24,7 +24,16 @@ lstFilesDCM = []
 baseImage = np.zeros(512, float)
 processedImage = np.zeros(512, float)
 tones = 65536
-testImage = False
+testImage = False #flag needed for no dicom images
+
+colorBlack = [0,0,0]
+colorGreen = [0,50,0]
+colorRed = [255,0,0]
+colorBlue = [0,0,100]
+colorWhite = [255,255,255]
+colorYellow = [255,255,0]
+colorPink = [255,0,255]
+colors3 = [colorBlack, colorBlue, colorGreen, colorPink, colorRed, colorWhite, colorYellow]
 
 def loadFiles():
     global testImage
@@ -159,10 +168,6 @@ def applyConvolution(matrix, kernel, borderSize, borderType):
         finalMatrix = convMatrix
     else:
         finalMatrix = convMatrix[borderSize:rowsLimit+1:1, borderSize:columnsLimit+1:1]   
-    
-    """ plt.imshow(convMatrix)
-    plt.gcf().canvas.set_window_title('Image Filtering')     
-    plt.show() """
     
     return finalMatrix
    
@@ -362,8 +367,7 @@ def calculateCentroids(image, centroids):
 
     return centroids==newCentroids, newCentroids, groups
        
-
-def kmeans(image, baseCentroids, colors):    
+def kmeans(image, baseCentroids):    
     global processImage
     shouldFinish, newCentroids, groups = calculateCentroids(image, baseCentroids)
     
@@ -374,7 +378,7 @@ def kmeans(image, baseCentroids, colors):
     
     for i in range(0, len(groups)):
         for j in groups[i]:
-            newImage[image==j] = colors[i]
+            newImage[image==j] = baseCentroids[i]
     
     plotImages(newImage)
     processImage = newImage
@@ -394,6 +398,23 @@ def erosion(image):
             finalMatrix[i, j] = 0
             if np.array_equal(submatrix, s):            
                 finalMatrix[i, j] = image[i, j]            
+      
+    plotImages(finalMatrix)
+    processImage = finalMatrix
+
+def dilation(image):
+    global processImage
+
+    s = np.asmatrix(np.array([[1,1,1],[1,1,1],[1,1,1]])) 
+
+    rowsLimit, columnsLimit = np.shape(image)
+    kernelSize = np.shape(s)
+    finalMatrix = np.copy(image)
+
+    for i in range(0, rowsLimit):
+        for j in range(0, columnsLimit):
+            if image[i, j] == 1:
+                finalMatrix[i:i+kernelSize[0]:1,j:j+kernelSize[0]:1] = 1
       
     plotImages(finalMatrix)
     processImage = finalMatrix
@@ -453,20 +474,22 @@ def applyFunction():
 
     elif function == 'Otsu by regions':
         regionSize = simpledialog.askinteger("Region size", "Digit the region size\n", parent=root, minvalue=8, maxvalue=256)
-        applyOtsuByRegions(currentImage, regionSize)   
+        applyOtsuByRegions(currentImage, int(regionSize)) 
 
     elif function == 'k-means':
         k = simpledialog.askinteger("Define K", "Digit the K size\n", parent=root, minvalue=1, maxvalue=5)
         centroids = []
-        colors = []
+
         for i in range(0, int(k)):
             centroids.append(simpledialog.askinteger("Centroids", 'Digit the centroid number %d \n'%(i+1), parent=root, minvalue=0, maxvalue=tones))
-        for i in range(0, int(k)):
-            colors.append(simpledialog.askinteger("Colors", 'Digit the value of the color number %d \n'%(i+1), parent=root, minvalue=0, maxvalue=tones))
-        kmeans(currentImage, centroids, colors)
+               
+        kmeans(currentImage, centroids)
 
     elif function == 'erosion':
         erosion(currentImage)
+
+    elif function == 'dilation':
+        dilation(currentImage)
 
     else:
         messagebox.showinfo("Error", "Function not found")    
@@ -502,7 +525,7 @@ image_cb.grid(row=1, column=0, pady=10, padx=5)
 functions_cb = ttk.Combobox(files_fr, state='readonly')
 functions_cb.set("Select function")
 functions_cb.grid(row=1, column=1, pady=10)
-functions_cb["values"] = ['Histogram', 'Average filter', 'Gaussian filter', 'Rayleigh filter', 'Median filter', 'Sobel', 'Otsu total', 'Otsu by regions', 'k-means', 'erosion']
+functions_cb["values"] = ['Histogram', 'Average filter', 'Gaussian filter', 'Rayleigh filter', 'Median filter', 'Sobel', 'Otsu total', 'Otsu by regions', 'k-means', 'erosion', 'dilation']
 
 apply_bt = tk.Button(files_fr, text="Apply", command=applyFunction, bg='white', state=DISABLED)
 apply_bt.grid(row=1, column=2, pady=10, padx=5)
