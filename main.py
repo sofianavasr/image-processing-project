@@ -20,11 +20,12 @@ from tkinter import simpledialog
 from kernels import *
 from PIL import Image
 
-lstFilesDCM = [] 
-baseImage = np.zeros(512, float)
-processedImage = np.zeros(512, float)
+lstFilesDCM = []  #contains the image files
+baseImage = np.zeros(512, float) # stores the original image
+processImage = np.zeros(512, float) #stores the processed image
 tones = 65536
 testImage = False #flag needed for no dicom images
+undo = np.zeros(512, float) #stores the image before applying any function
 
 colorBlack = [0,0,0]
 colorGreen = [0,50,0]
@@ -61,6 +62,7 @@ def resetSelector():
     functions_cb.set("Select function")
     image_cb.set("Choose an image")
     apply_bt.configure(state=DISABLED)    
+    undo_bt.configure(state=DISABLED)  
     testImage = False
     
 def showHeaderInfo(header):
@@ -124,6 +126,9 @@ def plotTest(image):
     plt.gcf().canvas.set_window_title('Image Test')     
     plt.show()
 
+def undoFunction():
+    plotImages(undo)
+
 def processImage():      
     global baseImage, processImage
     text_fr.pack()   
@@ -132,6 +137,7 @@ def processImage():
     right_image_fr.pack(fill='both', expand=True)
   
     apply_bt.configure(state=NORMAL)
+    undo_bt.configure(state=NORMAL)
     
     if testImage:
         img = Image.open(lstFilesDCM[file_cb.current()])
@@ -421,7 +427,10 @@ def dilation(image):
 
 # Menu options
 def applyFunction():
+    global undo
     currentImage = np.copy(processImage)
+    undo = np.copy(processImage)
+
     if image_cb.get() == 'Original':
         currentImage = np.copy(baseImage)
     
@@ -529,6 +538,9 @@ functions_cb["values"] = ['Histogram', 'Average filter', 'Gaussian filter', 'Ray
 
 apply_bt = tk.Button(files_fr, text="Apply", command=applyFunction, bg='white', state=DISABLED)
 apply_bt.grid(row=1, column=2, pady=10, padx=5)
+
+undo_bt = tk.Button(files_fr, text="Undo", command=undoFunction, bg='white', state=DISABLED)
+undo_bt.grid(row=1, column=3, pady=10, padx=5)
 
 text_fr = Frame(root)
 text_fr.configure(background='pink')
