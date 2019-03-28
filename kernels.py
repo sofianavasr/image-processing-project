@@ -224,10 +224,10 @@ finalMatrix = np.copy(m)
 
 for i in range(0, rowsLimit):
     for j in range(0, columnsLimit):
-        submatrix = m[i:i+kernelSize[0]:1,j:j+kernelSize[0]:1]
-        finalMatrix[i, j] = 0
-        if np.array_equal(submatrix, s):            
-            finalMatrix[i, j] = m[i, j]
+        #submatrix = m[i:i+kernelSize[0]:1,j:j+kernelSize[0]:1]
+        #finalMatrix[i, j] = 0
+        if m[i, j] == 1:
+            finalMatrix[i:i+kernelSize[0]:1,j:j+kernelSize[0]:1] = 1
         
 print(finalMatrix) """
         
